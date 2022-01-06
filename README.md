@@ -1,6 +1,12 @@
 # Tasks
 
-Simple and Lightweight task application with Pomodoro Timer
+Simple and Lightweight Task application with Pomodoro Timer:
+
+Main targets/features (in progress):
+- No need to create any account
+- Portable / No Install
+- Focus time tracking
+- Activity Log
 
 # Enhancements
 
