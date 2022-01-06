@@ -10,7 +10,8 @@ Main targets/features (in progress):
 - Integration with (local) Outlook
 
 With a python environment: launch Pomo.py to start the application.
-Without python environment: I will soon release a standalone windows executable
+
+Without a python environment: Windows executable to be released soon
 
 # Enhancements
 
