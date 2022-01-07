@@ -17,6 +17,7 @@ Without a python environment: Windows executable to be released soon
 
 To be scheduled:
 - Handle several profiles/databases (Personal/Professional ...)
+- Add error log
 
 # Known Issues
 

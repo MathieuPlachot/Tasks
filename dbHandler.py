@@ -1,5 +1,5 @@
 import sqlite3 as lite
-
+import datetime
 
 class dbHandler:
 
@@ -89,7 +89,7 @@ class dbHandler:
         self.con.commit()
 
     def completeTask(self, taskID):
-        request = 'UPDATE Task SET Status = "DONE" WHERE ID=' + str(taskID)
+        request = 'UPDATE Task SET Status = "DONE", CloseDate = datetime("now","localtime")  WHERE ID=' + str(taskID)
         self.cur.execute(request)
         self.con.commit()
 

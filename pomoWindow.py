@@ -120,6 +120,7 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
 
         # Give each column 1/10 of the width
         self.tableWidget.setColumnHidden(0,True)
+        print(0.48*tableWitdh)
         self.tableWidget.setColumnWidth(1,0.48*tableWitdh)
         self.tableWidget.setColumnWidth(2,0.1*tableWitdh)
         self.tableWidget.setColumnWidth(3,0.1*tableWitdh)
