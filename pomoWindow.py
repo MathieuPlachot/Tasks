@@ -50,11 +50,13 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         self.setColumnsSizes()
 
     def hideEditTab(self):
-        self.tabWidget.setTabVisible(3,False)
+        self.tabWidget.setTabEnabled(3,False)
+        self.tabWidget.setTabText(3,"")
+    
 
     def openTaskEdition(self, taskID):
         self.editedTaskID = taskID
-        self.tabWidget.setTabVisible(3,True)
+        self.tabWidget.setTabEnabled(3,True)
         self.tabWidget.setTabText(3,"Edit: " + str(self.mainApp.getTaskNameByID(taskID)))
         self.titleText.setText(str(self.mainApp.getTaskNameByID(taskID)))
         self.decriptionText.setPlainText(str(self.mainApp.getTaskDescriptionByID(taskID)))
