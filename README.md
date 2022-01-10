@@ -11,7 +11,9 @@ Main targets/features (in progress):
 
 With a python environment: launch Pomo.py to start the application.
 
-Without a python environment: a packaged standalone windows executable is available in Windows folder
+Windows:
+- Copy the content of the Windozs folder anywhere on your computer
+- Launch Tasks.exe
 
 # Enhancements
 
