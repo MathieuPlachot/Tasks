@@ -2,7 +2,7 @@ import sys
 import time
 
 from PyQt5.QtWidgets import (
-    QApplication, QDialog, QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView
+    QApplication, QDialog, QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView, QInputDialog, QLineEdit
 )
 from PyQt5.QtGui import (
     QIcon, QFont
@@ -12,15 +12,13 @@ from ui.pomoWindowUi import Ui_MainWindow
 
 class pomoWindow(QMainWindow, Ui_MainWindow):
 
-
-
     def __init__(self, mainApp, parent=None):
         super().__init__(parent)
         self.mainApp = mainApp
         self.setupUi(self)
-        self.connectSignalsSlots()
+        self.populateProfileCombo()
         self.refreshDataDisplay()
-        # self.setColumnsSizes()
+        self.connectSignalsSlots()
         self.tableWidget.resizeEvent = self.myResize
         self.hideEditTab()
         self.editedTaskID = 0
@@ -33,6 +31,25 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
             headerLabels.append(str(i-7))
             self.planningTable.insertColumn(col)
         self.planningTable.setHorizontalHeaderLabels(headerLabels)
+
+    def addProfileName(self):
+        text, ok = QInputDialog().getText(self, "QInputDialog().getText()","Enter New Preset Name:", QLineEdit.Normal)
+        if ok and text:
+            self.profileComboBox.addItem(text)
+            self.profileComboBox.setCurrentText(text)
+
+    def populateProfileCombo(self):
+        # Update the available profiles
+        self.profileComboBox.clear()
+        allProfiles = self.mainApp.myDBHandler.getAllProfiles()
+        if len(allProfiles) > 0:
+            for profileName in allProfiles:
+                self.profileComboBox.addItem(profileName)
+        else:
+            self.profileComboBox.addItem("Default")
+
+    def selectedProfileChange(self):
+        self.refreshDataDisplay()
 
     def allCheckBoxClicked(self):
         if self.allCheckBox.isChecked():
@@ -52,8 +69,8 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
     def hideEditTab(self):
         self.tabWidget.setTabEnabled(3,False)
         self.tabWidget.setTabText(3,"")
+        self.tabWidget.setCurrentIndex(0)
     
-
     def openTaskEdition(self, taskID):
         self.editedTaskID = taskID
         self.tabWidget.setTabEnabled(3,True)
@@ -64,10 +81,6 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         self.tabWidget.setCurrentWidget(self.tabWidget.widget(3))
 
     def connectSignalsSlots(self):
-        # print("Nothing to connect")
-        # self.action_Exit.triggered.connect(self.close)
-        # self.action_Find_Replace.triggered.connect(self.findAndReplace)
-        # self.action_About.triggered.connect(self.about)
         self.lineEdit.returnPressed.connect(self.addQuickTask)
         self.tableWidget.cellDoubleClicked.connect(self.taskDoubleClick)
         self.mainApp.socketDataReceived.connect(self.handleSocketData)
@@ -77,7 +90,9 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         self.closedCheckBox.clicked.connect(self.handleCheckBoxChange)
         self.openCheckBox.clicked.connect(self.handleCheckBoxChange)
         self.allCheckBox.clicked.connect(self.allCheckBoxClicked)
-        # self.tableWidget.show.connect(self.setColumnsSizes)
+        self.addProfileButton.clicked.connect(self.addProfileName)
+        self.profileComboBox.currentTextChanged.connect(self.selectedProfileChange)
+
 
     def applyTaskEdition(self):
         newTaskTitle = self.titleText.text()
@@ -86,6 +101,7 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         self.mainApp.setTaskTitle(self.editedTaskID, newTaskTitle)
         self.mainApp.setTaskDescription(self.editedTaskID, newTaskDesc)
         self.mainApp.setTaskNotes(self.editedTaskID, newTaskNotes)
+        self.refreshDataDisplay()
         self.hideEditTab()
 
     def cancelEdition(self):
@@ -141,18 +157,8 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         for i in range(28):
             self.planningTable.setColumnWidth(i+1,dayRatio*tableWitdh)
 
-        # Prevent resizing of last 3 columns and set their width
-        # self.tableWidget.horizontalHeader().setSectionResizeMode(self.tableWidget.horizontalHeader().logicalIndex(6),2)
-        # self.tableWidget.horizontalHeader().setSectionResizeMode(self.tableWidget.horizontalHeader().logicalIndex(7),2)
-        # self.tableWidget.horizontalHeader().setSectionResizeMode(self.tableWidget.horizontalHeader().logicalIndex(8),2)
-        # self.tableWidget.horizontalHeader().setSectionResizeMode(self.tableWidget.horizontalHeader().logicalIndex(9),2)
-        # self.tableWidget.setColumnWidth(6,20)
-        # self.tableWidget.setColumnWidth(7,20)
-        # self.tableWidget.setColumnWidth(8,20)
-        # self.tableWidget.setColumnWidth(9,20)
-            
-
     def refreshDataDisplay(self):
+
         # Clear any existing rows
         self.tableWidget.setRowCount(0)
 
@@ -163,11 +169,11 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         # Get the data from the main app
         tasksDataSet = []
         if self.openCheckBox.isChecked() and self.closedCheckBox.isChecked():
-            tasksDataSet = self.mainApp.getTasksDataSet()
+            tasksDataSet = self.mainApp.getFilteredTasks(self.profileComboBox.currentText(), None)
         elif self.openCheckBox.isChecked():
-            tasksDataSet = self.mainApp.getAllOpenTasks()
+            tasksDataSet = self.mainApp.getFilteredTasks(self.profileComboBox.currentText(), "OPEN")
         elif self.closedCheckBox.isChecked():
-            tasksDataSet = self.mainApp.getAllClosedTasks()
+            tasksDataSet = self.mainApp.getFilteredTasks(self.profileComboBox.currentText(), "CLOSED")
 
         print(self.openCheckBox.isChecked())
         print(self.closedCheckBox.isChecked())
@@ -223,16 +229,12 @@ class pomoWindow(QMainWindow, Ui_MainWindow):
         self.dailyTimersLabel.setText("Timers: " + str(self.mainApp.getDailyTimers()))
 
         # Refresh the calendar
-        
-            
-
-
         self.textBrowser.setText(self.mainApp.log())
-            
+
 
     def addQuickTask(self):
         if self.lineEdit.text() != "":
-            self.mainApp.addQuickTask(self.lineEdit.text())
+            self.mainApp.addQuickTask(self.lineEdit.text(), self.profileComboBox.currentText())
             self.lineEdit.setText("")
             self.refreshDataDisplay()
 

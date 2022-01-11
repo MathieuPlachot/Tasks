@@ -3,20 +3,22 @@ import datetime
 
 class dbHandler:
 
-    def getAllTasks(self):
-        request = 'SELECT * FROM Task'
-        self.cur.execute(request)
-        result = self.cur.fetchall()
-        return result
+    def getAllProfiles(self):
+        allProfiles = []
+        for task in self.getFilteredTasks(None, None):
+            if not task[10] in  allProfiles:
+                allProfiles.append(task[10])
+        return allProfiles
 
-    def getAllOpenTasks(self):
-        request = 'SELECT * FROM Task WHERE Status="OPEN"'
-        self.cur.execute(request)
-        result = self.cur.fetchall()
-        return result
+    def getFilteredTasks(self, profile, status):
 
-    def getAllClosedTasks(self):
-        request = 'SELECT * FROM Task WHERE Status="DONE"'
+        if not profile:
+            profile = "Profile"
+        if not status:
+            status = "Status"
+
+        request = 'SELECT * FROM Task WHERE Status="' + status + '" and Profile = "' + profile + '"'
+        print(request)
         self.cur.execute(request)
         result = self.cur.fetchall()
         return result
@@ -66,17 +68,15 @@ class dbHandler:
         # print(result)
         return result
 
-        getAllSessionsOnDate
-
     def getDailySessions(self):
         request = "SELECT * FROM Session WHERE date(Start)=date('now','localtime')"
         self.cur.execute(request)
         result = self.cur.fetchall()
         return result
 
-    def addTask(self, taskTitle):
-        request = 'INSERT INTO Task(Title, Description) VALUES (?,?)'
-        values = (taskTitle,"")
+    def addTask(self, taskTitle, profile):
+        request = 'INSERT INTO Task(Title, Description, Profile) VALUES (?,?,?)'
+        values = (taskTitle,"",profile)
         self.cur.execute(request, values)
         self.con.commit()
 
@@ -123,117 +123,6 @@ class dbHandler:
         request = 'SELECT ' + str(selection) + ' FROM ' + str(type)
         self.cur.execute(request)
         return self.cur.fetchall()
-
-    def getDBVersionAndTimestamp(self):
-        request = 'SELECT * FROM DBInfo'
-        self.cur.execute(request)
-        result = self.cur.fetchall()
-        if len(result)>0:
-            return result[0]
-
-    def getBaselines(self):
-        request = 'SELECT * FROM Baseline'
-        self.cur.execute(request)
-        result = self.cur.fetchall()
-        returnTable = []
-        for baseline in result:
-            returnTable.append(baseline[0])
-        return returnTable
-
-
-
-    def saveNewStepStatus(self, reportName, stepID, status, value, comment, baseline, dateTime, ncr):
-        print("save step to db")
-        # request = "UPDATE TestStep SET Status = '" + status + "', UserEntry = '" + value + "', UserComment = '" + comment + "', Baseline = '" + baseline + "', StatusTimeStamp = '" + dateTime + "' WHERE TestSheetName = '" + reportName + "' AND TestSheetPosition = '" + str(stepID) + "';"
-        request = "UPDATE TestStep SET Status = ?, UserEntry = ?, UserComment = ?, Baseline = ?, StatusTimeStamp = ?, NCR = ? WHERE TestSheetName = ? AND TestSheetPosition = ?"
-        self.cur.execute(request,(status,value,comment,baseline,dateTime,ncr,reportName,str(stepID)))
-        self.con.commit()
-
-    # Get info for equipment by name
-    def getEqtInfo(self, eqtName):
-        # print("Getting info for report : " + reportName)
-        request = 'SELECT * FROM Equipment WHERE Name==\"'+eqtName+'"'
-        self.cur.execute(request)
-        return self.cur.fetchall()[0]
-
-    # Get info of the LAST version of reportName
-    def getReportInfo(self, reportName):
-        # print("Getting info for report : " + reportName)
-        request = 'SELECT * FROM TestReport WHERE Name==\"'+reportName+'\"'
-        self.cur.execute(request)
-        return self.cur.fetchall()[0]
-
-    def getReportRevisionData(self, reportName):
-        # print("Getting info for report : " + reportName)
-        request = 'SELECT * FROM Events WHERE Object==\"'+reportName+'\"'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-    # Get steps of the LAST version of reportName
-    def getReportSteps(self, reportName):
-        request = 'SELECT * FROM TestStep WHERE TestSheetName==\"'+reportName+'\"'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-    def prettyPrintNCR(self, ncrID):
-        ncrString = "[NCR_" + ncrID + "]"
-        ncrString = ncrString + "[" + self.getNCRProperty(ncrID, "Location") + "]"
-        ncrString = ncrString + "[" + self.getNCRProperty(ncrID, "Location") + "]"
-        ncrString = ncrString + "[" + self.getNCRProperty(ncrID, "Subgroup") + "]"
-        ncrString = ncrString + "[" + self.getNCRProperty(ncrID, "Ssy") + "]"
-        ncrString = ncrString + " " + self.getNCRProperty(ncrID, "Description")
-        return ncrString
-
-    def getNCRProperty(self, ncrID, propertyName):
-        # print("get prop " + propertyName + " of ncr " + ncrID)
-        request = 'SELECT ' + propertyName + ' FROM NCR WHERE ID==\"'+ncrID+'"'
-        self.cur.execute(request)
-        return self.cur.fetchall()[0][0]
-
-    # Get steps of the LAST version of reportName
-    def getReportStepsBySheet(self, reportName, sheetName):
-        request = 'SELECT * FROM TestStep WHERE TestSheetName==\"'+reportName+'\" and TestSheet==\"' + sheetName + '\"'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-
-
-    def createNCR(self, ncrReportName, ncrId,ncrType,ncrSubgroup,ncrSsy,ncrEqtName,ncrDescription,ncrStatus,ncrLocation,ncrRoom,ncrStage,ncrEventReference,ncrOpenDate,ncrCategory,ncrOtherParties,ncrNCRelated,ncrSafetyRelated,ncrIssuedBy,ncrSolvedBy,ncrTargetDate,ncrTargetPhase,ncrActualDate,ncrActionTaken,ncrClosedBy,ncrAckDateOtherParty,ncrAckDatePIC,ncrRemarks):
-        print("Create NCR " + str(ncrId))
-        request = 'INSERT INTO NCR VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-        self.cur.execute(request, (ncrReportName, ncrId,ncrType,ncrSubgroup,ncrSsy,ncrEqtName,ncrDescription,ncrStatus,ncrLocation,ncrRoom,ncrStage,ncrEventReference,ncrOpenDate,ncrCategory,ncrOtherParties,ncrNCRelated,ncrSafetyRelated,ncrIssuedBy,ncrSolvedBy,ncrTargetDate,ncrTargetPhase,ncrActualDate,ncrActionTaken,ncrClosedBy,ncrAckDateOtherParty,ncrAckDatePIC,ncrRemarks))
-        self.con.commit()
-
-    def getAvailableToolsInfo(self):
-        # print("Getting info for report : " + reportName)
-        request = 'SELECT * FROM Tools'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-    def getNCRDetails(self, ncrID):
-        # print("Getting info for report : " + reportName)
-        request = 'SELECT * FROM NCR WHERE ID==\"'+ncrID+'"'
-        self.cur.execute(request)
-        return self.cur.fetchall()[0]
-
-    def getReportHeaders(self):
-        request = 'PRAGMA table_info(TestReport)'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-    def getStepHeaders(self):
-        request = 'PRAGMA table_info(TestStep)'
-        self.cur.execute(request)
-        return self.cur.fetchall()
-
-    def getTablePropertyCol(self, table, property):
-        request = 'PRAGMA table_info(' + table + ')'
-        # print(request)
-        self.cur.execute(request)
-        for header in self.cur.fetchall():
-            # print(header)
-            if header[1] == property:
-                return header[0]
 
     def disconnect(self):
         self.con.close()

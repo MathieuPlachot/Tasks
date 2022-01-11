@@ -26,15 +26,16 @@ from pomoTimerWindow import pomoTimerWindow
 # Set the stoptime when timer is finished even if window is not closed
 # Start on the correct tab
 
+
 class PomoApp(QObject):
 
     socketDataReceived = pyqtSignal(str)
 
-    def getTasksDataSet(self):
-        return self.myDBHandler.getAllTasks()
+    def getAllTasksProfile(self, profile):
+        return self.myDBHandler.getAllTasksProfile(profile)
 
-    def addQuickTask(self, title):
-        self.myDBHandler.addTask(title)
+    def addQuickTask(self, title, profile):
+        self.myDBHandler.addTask(title, profile)
 
     def incrementLoggedTime(self, taskID, increment):
         self.myDBHandler.incrementLoggedTime(taskID, increment)
@@ -85,11 +86,9 @@ class PomoApp(QObject):
     def getAllSessionsOnDate(self,date):
         return self.myDBHandler.getAllSessionsOnDate(date)
 
-    def getAllOpenTasks(self):
-        return self.myDBHandler.getAllOpenTasks()
 
-    def getAllClosedTasks(self):
-        return self.myDBHandler.getAllClosedTasks()
+    def getFilteredTasks(self, profile, status):
+        return self.myDBHandler.getFilteredTasks(profile, status)
 
     def calculateTaskLoggedTime(self,taskID):
         taskSessions = self.myDBHandler.getAllTaskSessions(taskID)
@@ -160,30 +159,10 @@ class PomoApp(QObject):
         myThread = threading.Thread(target=self.listenSocket)
         myThread.start()
         app = QApplication(sys.argv)
-        # app.setStyle("Fusion")
-        # Now use a palette to switch to dark colors:
-        # palette = QPalette()
-        # palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        # palette.setColor(QPalette.WindowText, Qt.white)
-        # palette.setColor(QPalette.Base, QColor(25, 25, 25))
-        # palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        # palette.setColor(QPalette.ToolTipBase, Qt.black)
-        # palette.setColor(QPalette.ToolTipText, Qt.white)
-        # palette.setColor(QPalette.Text, Qt.white)
-        # palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        # palette.setColor(QPalette.ButtonText, Qt.white)
-        # palette.setColor(QPalette.BrightText, Qt.red)
-        # palette.setColor(QPalette.Link, QColor(42, 130, 218))
-        # palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-        # palette.setColor(QPalette.HighlightedText, Qt.black)
-        # app.setPalette(palette)
         self.maimWindow = pomoWindow(self)
         self.timerWindow = pomoTimerWindow(self)
         self.maimWindow.show()
         sys.exit(app.exec())
-
-
-        
 
 if __name__ == "__main__":
     myPomoApp = PomoApp()
